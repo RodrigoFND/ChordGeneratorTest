@@ -1,14 +1,43 @@
 import React,{useState} from 'react';
-import { ChordsTypeApi, CircleApi, MajorCircleApi, MinorCircleApi } from '../../library/chords-api';
+import { ChordsTypeApi, CircleApi, CircleApiScale, Grau, MajorCircleApi, MinorCircleApi } from '../../library/chords-api';
 import { EChordsType, EMajorCircleChords } from '../../library/chords.models';
 import Select from '../../shared/input/select-input/select-input.component';
 
 function ChordGenerator() {
     const [chordTypeChoosen, setChordTypeChoosen] = useState<EChordsType>(EChordsType.Major)
     const [chordChoosen, setChordChoosen] = useState<EMajorCircleChords>()
-    const [chordsFromScale, setChordsFromScale] = useState<CircleApi[]>([])
+    const [circleChordScale, setChordsFromScale] = useState<CircleApiScale[]>([])
+
+    const applyGrausForChords = (circleChordsScale: CircleApi[]) : CircleApiScale[]  => {
+            const chordsWithGrau: CircleApiScale[] = circleChordsScale.map((chord,index) => {
+                if(index == 0) {
+                    return {...chord,grau:  Grau.IV }
+                }
+                if(index == 1) {
+                    return {...chord,grau: Grau.I }
+                }
+                if(index == 2) {
+                    return {...chord,grau: Grau.V }
+                }
+                if(index == 3) {
+                    return {...chord,grau: chordTypeChoosen == EChordsType.Major? Grau.II : Grau.VI}
+                }
+                if(index == 4) {
+                    return {...chord,grau: chordTypeChoosen == EChordsType.Major? Grau.VI : Grau.III}
+                }
+                if(index == 5) {
+                    return {...chord,grau: chordTypeChoosen == EChordsType.Major? Grau.III : Grau.VII}
+                }
+                if(index == 6) {
+                    return {...chord,grau: chordTypeChoosen == EChordsType.Major? Grau.VII : Grau.II}
+                }
+            })
+            const scale = chordsWithGrau.sort((a,b) => a.grau - b.grau)
+            return  scale
+
+    }
     
-    const ajustChords = (chordIdChoosen: EMajorCircleChords) => {
+    const generateChords = (chordIdChoosen: EMajorCircleChords) => {
         if(chordIdChoosen == null) {
             return;
         }
@@ -41,15 +70,20 @@ function ChordGenerator() {
         }
         const leftThreeChords = chordsForScale.splice(0,3)
         let rightThreeChords = [...leftThreeChords]
+        let sevenChord = chordsForScale.splice(3,1)
         if(chordTypeChoosen == EChordsType.Major) {
             rightThreeChords = rightThreeChords.map(chord => MinorCircleApi.find(minorChord => minorChord.id == chord.id))
         } else {
             rightThreeChords = rightThreeChords.map(chord => MajorCircleApi.find(majorChords => majorChords.id == chord.id))
+            sevenChord = sevenChord.map(chord => {
+               const sevenChord = MajorCircleApi.find(x => x.id == chord.id)
+                return {...sevenChord}
+            } )
         }
-        const sevenChord = chordsForScale.splice(3,1)
+        
         chordsForScale = [...leftThreeChords,...rightThreeChords,...sevenChord]
-        setChordsFromScale([])
-        setChordsFromScale(chordsForScale)
+        const chordWithGraus: CircleApiScale[] = applyGrausForChords(chordsForScale)
+        setChordsFromScale(chordWithGraus)
 
     }
     return (
@@ -72,12 +106,12 @@ function ChordGenerator() {
         
         
          />
-        <button onClick={() => ajustChords(chordChoosen )}>Sort</button>
+        <button onClick={() => generateChords(chordChoosen )}>Sort</button>
         <hr></hr>
         <p>Circle</p>
         {MajorCircleApi.map((chords,index) => <div key={index}>{chords.chordName} - {chords.id} </div>)}
         <hr></hr>
-        {chordsFromScale.map((chords,index) => <div key={index}>{chords.chordName}</div>)}
+        {circleChordScale.map((chords) => <div key={chords.grau}>{chords.chordName} = {chords.grau + 1}</div>)}
       
       </div>
     );

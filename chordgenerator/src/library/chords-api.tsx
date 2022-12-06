@@ -6,7 +6,25 @@ export interface CircleApi {
     variations: {
         name: string;
     }
+}
 
+export interface CircleApiScale {
+    id: EMajorCircleChords | EMinorCircleChords,
+    grau: Grau
+    chordName: string;
+    variations: {
+        name: string;
+    }
+}
+
+export enum Grau {
+    I,
+    II,
+    III,
+    IV,
+    V,
+    VI,
+    VII
 }
 
 export const ChordsTypeApi = [
